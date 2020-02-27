@@ -1,4 +1,4 @@
-QUnit.module( "data", { teardown: moduleTeardown } );
+QUnit.module( "data", { afterEach: moduleTeardown } );
 
 QUnit.test( "expando", function( assert ) {
 	assert.expect( 1 );
@@ -132,11 +132,6 @@ QUnit.test( "jQuery.data(div)", function( assert ) {
 	var div = document.createElement( "div" );
 
 	dataTests( div, assert );
-
-	// We stored one key in the private data
-	// assert that nothing else was put in there, and that that
-	// one stayed there.
-	assert.expectJqData( this, div, "foo" );
 } );
 
 QUnit.test( "jQuery.data({})", function( assert ) {
@@ -159,8 +154,6 @@ QUnit.test( "jQuery.data(document)", function( assert ) {
 	assert.expect( 25 );
 
 	dataTests( document, assert );
-
-	assert.expectJqData( this, document, "foo" );
 } );
 
 QUnit.test( "jQuery.data(<embed>)", function( assert ) {
@@ -513,16 +506,14 @@ QUnit.test( ".removeData()", function( assert ) {
 	assert.equal( div.data( "test.foo" ), undefined, "Make sure data is intact" );
 } );
 
-if ( window.JSON && window.JSON.stringify ) {
-	QUnit.test( "JSON serialization (#8108)", function( assert ) {
-		assert.expect( 1 );
+QUnit.test( "JSON serialization (#8108)", function( assert ) {
+	assert.expect( 1 );
 
-		var obj = { "foo": "bar" };
-		jQuery.data( obj, "hidden", true );
+	var obj = { "foo": "bar" };
+	jQuery.data( obj, "hidden", true );
 
-		assert.equal( JSON.stringify( obj ), "{\"foo\":\"bar\"}", "Expando is hidden from JSON.stringify" );
-	} );
-}
+	assert.equal( JSON.stringify( obj ), "{\"foo\":\"bar\"}", "Expando is hidden from JSON.stringify" );
+} );
 
 QUnit.test( ".data should follow html5 specification regarding camel casing", function( assert ) {
 	assert.expect( 12 );
@@ -606,26 +597,53 @@ QUnit.test( ".data always sets data with the camelCased key (gh-2257)", function
 
 	var div = jQuery( "<div>" ).appendTo( "#qunit-fixture" ),
 		datas = {
-			"non-empty": "a string",
-			"empty-string": "",
-			"one-value": 1,
-			"zero-value": 0,
-			"an-array": [],
-			"an-object": {},
-			"bool-true": true,
-			"bool-false": false,
+			"non-empty": {
+				key: "nonEmpty",
+				value: "a string"
+			},
+			"empty-string": {
+				key: "emptyString",
+				value: ""
+			},
+			"one-value": {
+				key: "oneValue",
+				value: 1
+			},
+			"zero-value": {
+				key: "zeroValue",
+				value: 0
+			},
+			"an-array": {
+				key: "anArray",
+				value: []
+			},
+			"an-object": {
+				key: "anObject",
+				value: {}
+			},
+			"bool-true": {
+				key: "boolTrue",
+				value: true
+			},
+			"bool-false": {
+				key: "boolFalse",
+				value: false
+			},
 
 			// JSHint enforces double quotes,
 			// but JSON strings need double quotes to parse
 			// so we need escaped double quotes here
-			"some-json": "{ \"foo\": \"bar\" }"
+			"some-json": {
+				key: "someJson",
+				value: "{ \"foo\": \"bar\" }"
+			}
 		};
 
 	jQuery.each( datas, function( key, val ) {
-		div.data( key, val );
+		div.data( key, val.value );
 		var allData = div.data();
 		assert.equal( allData[ key ], undefined, ".data does not store with hyphenated keys" );
-		assert.equal( allData[ jQuery.camelCase( key ) ], val, ".data stores the camelCased key" );
+		assert.equal( allData[ val.key ], val.value, ".data stores the camelCased key" );
 	} );
 } );
 
@@ -643,36 +661,92 @@ QUnit.test( ".data supports interoperable hyphenated/camelCase get/set of proper
 
 	var div = jQuery( "<div/>", { id: "hyphened" } ).appendTo( "#qunit-fixture" ),
 		datas = {
-			"non-empty": "a string",
-			"empty-string": "",
-			"one-value": 1,
-			"zero-value": 0,
-			"an-array": [],
-			"an-object": {},
-			"bool-true": true,
-			"bool-false": false,
+			"non-empty": {
+				key: "nonEmpty",
+				value: "a string"
+			},
+			"empty-string": {
+				key: "emptyString",
+				value: ""
+			},
+			"one-value": {
+				key: "oneValue",
+				value: 1
+			},
+			"zero-value": {
+				key: "zeroValue",
+				value: 0
+			},
+			"an-array": {
+				key: "anArray",
+				value: []
+			},
+			"an-object": {
+				key: "anObject",
+				value: {}
+			},
+			"bool-true": {
+				key: "boolTrue",
+				value: true
+			},
+			"bool-false": {
+				key: "boolFalse",
+				value: false
+			},
 
 			// JSHint enforces double quotes,
 			// but JSON strings need double quotes to parse
 			// so we need escaped double quotes here
-			"some-json": "{ \"foo\": \"bar\" }",
-			"num-1-middle": true,
-			"num-end-2": true,
-			"2-num-start": true
+			"some-json": {
+				key: "someJson",
+				value: "{ \"foo\": \"bar\" }"
+			},
+
+			"num-1-middle": {
+				key: "num-1Middle",
+				value: true
+			},
+			"num-end-2": {
+				key: "numEnd-2",
+				value: true
+			},
+			"2-num-start": {
+				key: "2NumStart",
+				value: true
+			},
+
+			// Vendor prefixes are not treated in a special way.
+			"-ms-foo": {
+				key: "MsFoo",
+				value: true
+			},
+			"-moz-foo": {
+				key: "MozFoo",
+				value: true
+			},
+			"-webkit-foo": {
+				key: "WebkitFoo",
+				value: true
+			},
+			"-fake-foo": {
+				key: "FakeFoo",
+				value: true
+			}
 		};
 
-	assert.expect( 24 );
+	assert.expect( 32 );
 
 	jQuery.each( datas, function( key, val ) {
-		div.data( key, val );
+		div.data( key, val.value );
 
-		assert.deepEqual( div.data( key ), val, "get: " + key );
-		assert.deepEqual( div.data( jQuery.camelCase( key ) ), val, "get: " + jQuery.camelCase( key ) );
+		assert.deepEqual( div.data( key ), val.value, "get: " + key );
+		assert.deepEqual( div.data( val.key ), val.value, "get: " + val.key );
 	} );
 } );
 
 QUnit.test( ".data supports interoperable removal of hyphenated/camelCase properties", function( assert ) {
 	var div = jQuery( "<div/>", { id: "hyphened" } ).appendTo( "#qunit-fixture" ),
+		rdashAlpha = /-([a-z])/g,
 		datas = {
 			"non-empty": "a string",
 			"empty-string": "",
@@ -691,11 +765,19 @@ QUnit.test( ".data supports interoperable removal of hyphenated/camelCase proper
 
 	assert.expect( 27 );
 
+	function fcamelCase( all, letter ) {
+		return letter.toUpperCase();
+	}
+
 	jQuery.each( datas, function( key, val ) {
 		div.data( key, val );
 
 		assert.deepEqual( div.data( key ), val, "get: " + key );
-		assert.deepEqual( div.data( jQuery.camelCase( key ) ), val, "get: " + jQuery.camelCase( key ) );
+		assert.deepEqual(
+			div.data( key.replace( rdashAlpha, fcamelCase ) ),
+			val,
+			"get: " + key.replace( rdashAlpha, fcamelCase )
+		);
 
 		div.removeData( key );
 
@@ -768,16 +850,16 @@ QUnit.test( ".removeData supports removal of hyphenated properties via array (#1
 
 // Test originally by Moschel
 QUnit.test( ".removeData should not throw exceptions. (#10080)", function( assert ) {
+	var done = assert.async();
 	assert.expect( 1 );
-	QUnit.stop();
 	var frame = jQuery( "#loadediframe" );
 	jQuery( frame[ 0 ].contentWindow ).on( "unload", function() {
 		assert.ok( true, "called unload" );
-		QUnit.start();
+		done();
 	} );
 
 	// change the url to trigger unload
-	frame.attr( "src", "data/iframe.html?param=true" );
+	frame.attr( "src", baseURL + "iframe.html?param=true" );
 } );
 
 QUnit.test( ".data only checks element attributes once. #8909", function( assert ) {
